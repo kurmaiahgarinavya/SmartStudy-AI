@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>SmartStudy AI</title>
+<style>
+
+body{
+font-family: Arial, sans-serif;
+background: linear-gradient(135deg,#f6f9ff,#e9efff);
+margin:0;
+padding:30px;
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+
+.section{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.row{
+display:flex;
+gap:20px;
+}
+
+.col{
+flex:1;
+}
+
+button{
+background:#6a7df0;
+color:white;
+border:none;
+padding:10px 20px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#5a6ee0;
+}
+
+input,select{
+padding:8px;
+margin-top:5px;
+width:100%;
+border-radius:5px;
+border:1px solid #ccc;
+}
+
+</style>
+
+
+
+<body>
+
+<h1>SmartStudy AI</h1>
+
+<form method="POST">
+
+<label>Subject Name:</label><br>
+<input type="text" name="subject"><br><br>
+
+<label>Exam Date:</label><br>
+<input type="date" name="date"><br><br>
+
+<label>Difficulty Level:</label><br>
+<select name="difficulty">
+<option>Easy</option>
+<option>Medium</option>
+<option>Hard</option>
+</select><br><br>
+
+<button type="submit">Generate Plan</button>
+
+</form>
+
+{% if plan %}
+<div>{{ plan|safe }}</div>
+{% endif %}
+
+<h2>Study Timer</h2>
+
+<p id="timer">00:00:00</p>
+
+<button onclick="startTimer()">Start</button>
+<button onclick="stopTimer()">Stop</button>
+<button onclick="resetTimer()">Reset</button>
+
+<script>
+function checkQuiz(){
+document.getElementById("result").innerHTML="Correct Answer!";
+}
+</script>
+
+<h2>Select Subject for Quiz</h2>
+
+<select id="subject" onchange="loadQuiz()">
+<option value="">--Select Subject--</option>
+<option value="python">Python</option>
+<option value="data">Data Analytics</option>
+<option value="statistics">Statistics</option>
+<option value="dbms">DBMS</option>
+<option value="cloud">Cloud Computing</option>
+<option value="cn">Computer Networks</option>
+<option value="os">Operating System</option>
+<option value="dl">Deep Learning</option>
+<option value="cyber">Cyber Security</option>
+</select>
+
+<div id="quizArea"></div>
+<h3>Your Score</h3>
+<p id="score">Score: 0 / 5</p>
+<p id="percentage">Percentage: 0%</p>
+
+<script>
+let score = 0;
+let totalQuestions = 5;
+const quizData = {
+
+python: [
+{
+q: "Which keyword is used to define a function in Python?",
+options: ["function","def","fun","define"],
+answer: "def"
+},
+{
+q: "Which data type stores decimal numbers?",
+options: ["int","float","str","list"],
+answer: "float"
+},
+{
+q: "Which symbol is used for comments in Python?",
+options: ["//","#","/*","--"],
+answer: "#"
+},
+{
+q: "Which function prints output?",
+options: ["echo()","print()","show()","display()"],
+answer: "print()"
+},
+{
+q: "Python is a ___ language.",
+options: ["compiled","machine","interpreted","assembly"],
+answer: "interpreted"
+}
+],
+
+data: [
+{
+q: "Data analytics is used to ___",
+options: ["store data","analyze data","delete data","encrypt data"],
+answer: "analyze data"
+},
+{
+q: "Which language is widely used for data analysis?",
+options: ["Python","HTML","CSS","PHP"],
+answer: "Python"
+},
+{
+q: "Which library is used for data analysis in Python?",
+options: ["NumPy","Pandas","Flask","Tkinter"],
+answer: "Pandas"
+},
+{
+q: "Charts help in ___",
+options: ["data deletion","data visualization","data hiding","data coding"],
+answer: "data visualization"
+},
+{
+q: "Which tool is used for big data processing?",
+options: ["Hadoop","Photoshop","Excel Paint","Notepad"],
+answer: "Hadoop"
+}
+],
+
+statistics: [
+{
+q: "Mean is also called",
+options: ["Average","Mode","Median","Range"],
+answer: "Average"
+},
+{
+q: "Which shows middle value?",
+options: ["Mean","Median","Mode","Variance"],
+answer: "Median"
+},
+{
+q: "Mode means",
+options: ["Most frequent value","Average","Minimum","Maximum"],
+answer: "Most frequent value"
+},
+{
+q: "Variance measures",
+options: ["center","spread","height","weight"],
+answer: "spread"
+},
+{
+q: "Statistics deals with",
+options: ["numbers","data","machines","networks"],
+answer: "data"
+}
+],
+
+dbms: [
+{
+q: "DBMS stands for",
+options: ["Database Management System","Data Backup System","Digital Base System","Data Basic System"],
+answer: "Database Management System"
+},
+{
+q: "Which language is used for database queries?",
+options: ["HTML","SQL","C++","Python"],
+answer: "SQL"
+},
+{
+q: "Primary key is used to",
+options: ["identify record","delete table","store file","encrypt data"],
+answer: "identify record"
+},
+{
+q: "DBMS stores data in",
+options: ["tables","images","videos","pages"],
+answer: "tables"
+},
+{
+q: "Example of DBMS",
+options: ["MySQL","Windows","Linux","Chrome"],
+answer: "MySQL"
+}
+],
+
+cloud: [
+{
+q: "Cloud computing provides",
+options: ["online storage","offline storage","manual storage","paper storage"],
+answer: "online storage"
+},
+{
+q: "Example of cloud service",
+options: ["Google Drive","Calculator","Paint","Notepad"],
+answer: "Google Drive"
+},
+{
+q: "Cloud services are accessed through",
+options: ["internet","USB","CD","Bluetooth"],
+answer: "internet"
+},
+{
+q: "IaaS stands for",
+options: ["Infrastructure as a Service","Internet as a Service","Input as a Service","Image as a Service"],
+answer: "Infrastructure as a Service"
+},
+{
+q: "Cloud reduces",
+options: ["hardware cost","software cost","internet cost","none"],
+answer: "hardware cost"
+}
+],
+
+cn: [
+{
+q: "LAN stands for",
+options: ["Local Area Network","Large Area Network","Long Area Network","Light Area Network"],
+answer: "Local Area Network"
+},
+{
+q: "IP address identifies",
+options: ["device","user","website","printer"],
+answer: "device"
+},
+{
+q: "Router connects",
+options: ["networks","printers","files","users"],
+answer: "networks"
+},
+{
+q: "Protocol defines",
+options: ["rules","colors","sizes","design"],
+answer: "rules"
+},
+{
+q: "Example of protocol",
+options: ["HTTP","HTML","CSS","JS"],
+answer: "HTTP"
+}
+],
+
+os: [
+{
+q: "OS stands for",
+options: ["Operating System","Output System","Open System","Online System"],
+answer: "Operating System"
+},
+{
+q: "Example of OS",
+options: ["Windows","MySQL","Python","HTML"],
+answer: "Windows"
+},
+{
+q: "OS manages",
+options: ["hardware","food","money","weather"],
+answer: "hardware"
+},
+{
+q: "Linux is a",
+options: ["operating system","browser","database","compiler"],
+answer: "operating system"
+},
+{
+q: "Task manager shows",
+options: ["running processes","images","videos","songs"],
+answer: "running processes"
+}
+],
+
+dl: [
+{
+q: "Deep learning is part of",
+options: ["Machine Learning","Networking","Cloud","DBMS"],
+answer: "Machine Learning"
+},
+{
+q: "Deep learning uses",
+options: ["Neural Networks","Tables","Files","Routers"],
+answer: "Neural Networks"
+},
+{
+q: "Example application",
+options: ["Image recognition","Printing","Typing","Scanning"],
+answer: "Image recognition"
+},
+{
+q: "DL processes",
+options: ["large data","small text","manual work","paper files"],
+answer: "large data"
+},
+{
+q: "TensorFlow is",
+options: ["DL library","browser","database","OS"],
+answer: "DL library"
+}
+],
+
+cyber: [
+{
+q: "Cyber security protects",
+options: ["data","food","water","air"],
+answer: "data"
+},
+{
+q: "Virus is",
+options: ["malware","hardware","software","network"],
+answer: "malware"
+},
+{
+q: "Strong passwords include",
+options: ["letters numbers symbols","only numbers","only letters","only symbols"],
+answer: "letters numbers symbols"
+},
+{
+q: "Firewall protects",
+options: ["network","food","paper","printer"],
+answer: "network"
+},
+{
+q: "Phishing attacks try to",
+options: ["steal information","repair computers","install OS","clean data"],
+answer: "steal information"
+}
+]
+
+};
+
+
+function loadQuiz(){
+score = 0;
+document.getElementById("score").innerHTML = "score: 0 / 5";
+document.getElementById("percentage").innerHTML = "percentage: 0%";
+
+const subject=document.getElementById("subject").value;
+const quizArea=document.getElementById("quizArea");
+
+quizArea.innerHTML="";
+
+const questions=quizData[subject];
+
+questions.forEach((item,index)=>{
+
+let html="<p>"+item.q+"</p>";
+
+item.options.forEach(opt=>{
+html+=`<button onclick="checkAnswer('${opt}','${item.answer}','result${index}')">${opt}</button>`;
+});
+
+html+=`<p id="result${index}"></p>`;
+
+quizArea.innerHTML+=html;
+
+});
+
+}
+
+function checkAnswer(selected,correct,id){
+
+if(selected == correct){
+
+document.getElementById(id).innerHTML="✅ Correct";
+
+score++;
+
+}
+
+else{
+
+document.getElementById(id).innerHTML="❌ Wrong";
+
+}
+
+let percentage = (score/totalQuestions)*100;
+
+document.getElementById("score").innerHTML =
+"Score: " + score + " / " + totalQuestions;
+
+document.getElementById("percentage").innerHTML =
+"Percentage: " + percentage + "%";
+
+}
+
+window.onload = function(){
+  loadQuiz();  
+}
+
+let seconds = 0;
+let timerInterval;
+let dayCount = 1;
+
+function startTimer(){
+
+timerInterval = setInterval(function(){
+
+seconds++;
+
+let hrs = Math.floor(seconds/3600);
+let mins = Math.floor((seconds%3600)/60);
+let secs = seconds%60;
+
+document.getElementById("timer").innerHTML =
+String(hrs).padStart(2,'0') + ":" +
+String(mins).padStart(2,'0') + ":" +
+String(secs).padStart(2,'0');
+
+},1000);
+
+}
+
+function stopTimer(){
+clearInterval(timerInterval);
+
+let time = document.getElementById("timer").innerHTML;
+
+document.getElementById("studyResult").innerHTML =
+"Day " + dayCount + " Study Time : " + time;
+
+let li = document.createElement("li");
+li.innerHTML = "Day " + dayCount + " : " + time;
+
+document.getElementById("studyHistory").appendChild(li);
+
+dayCount++;
+
+}
+function stopTimer(){
+clearInterval(timeInterval);
+let time = document.getElementById("timer").innerHTML;
+
+document.getElementById("studyResult").innerHTML =
+"Day " + dayCount + " Study Time : " + time;
+
+let li = document.createElement("li");
+li.innerHTML = "Day " + dayCount + " : " + time;
+
+document.getElementById("studyHistory").appendChild(li);
+
+dayCount++;
+
+}
+function resetTimer(){
+clearInterval(timerInterval);
+seconds = 0;
+document.getElementById("timer").innerHTML="00:00:00";
+}
+
+</script>
+
+<h2>Study Progress</h2>
+<canvas id="progressChart" width="500" height="400"></canvas>
+
+<h2>Subject Study Distribution</h2>
+<canvas id="pieChart" width="400" height="500"></canvas>
+
+<h2>Study Assistant Chatbot</h2>
+
+<div id="chatbox" style="border:1px solid gray;height:200px;overflow-y:auto;padding:10px;"></div>
+
+<input type="text" id="userInput" placeholder="Ask a question..." style="width:70%;">
+<button onclick="sendMessage()">Send</button>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+const pie = document.getElementById('pieChart');
+
+new Chart(pie, {
+type: 'pie',
+data: {
+labels: [
+'Python',
+'Data Analytics',
+'Statistics',
+'DBMS',
+'Cloud',
+'Computer Networks',
+'Operating System',
+'Deep Learning',
+'Cyber Security'
+],
+datasets: [{
+label: 'Study Distribution',
+data: [5,4,3,4,2,3,2,1,2]
+}]
+},
+options: {
+    responsive: false,
+    plugins: {
+        datalabels: {
+            formatter: (value, context) => {
+                let sum = 0;
+                let dataArr = context.chart.data.datasets[0].data;
+                dataArr.map(data => {
+                    sum += data;
+                });
+                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                return percentage;
+            },
+            color: "black",
+            font: {
+                weight: "bold",
+                size: 14
+            }
+        }
+    }
+},
+plugins: [ChartDataLabels]
+
+});
+</script>
+<script>
+const ctx = document.getElementById('progressChart');
+
+new Chart(ctx, {
+type: 'bar',
+data: {
+labels: [
+'Python',
+'Data Analytics',
+'Statistics',
+'DBMS',
+'Cloud',
+'Computer Networks',
+'Operating System',
+'Deep Learning',
+'Cyber Security'
+],
+datasets: [{
+label: 'Study Progress',
+data: [5,4,3,4,2,3,2,1,2],
+borderWidth: 1
+}]
+},
+options: {
+responsive: false,
+scales: {
+y: {
+beginAtZero: true
+}
+}
+}
+});
+function sendMessage(){
+
+let input = document.getElementById("userInput").value.toLowerCase();
+let chatbox = document.getElementById("chatbox");
+
+let response = "";
+
+/* CLOUD COMPUTING */
+
+if(input.includes("cloud")){
+
+if(input.includes("what") || input.includes("define")){
+response="Cloud computing is a technology that delivers computing services like storage, servers and networking through the internet.";
+}
+
+else if(input.includes("advantages")){
+response="Advantages of cloud computing include scalability, cost efficiency, remote access, automatic updates and high availability.";
+}
+
+else if(input.includes("applications")){
+response="Applications of cloud computing include data storage, web hosting, email services, streaming platforms and big data processing.";
+}
+
+else{
+response="Cloud computing allows users to access computing resources over the internet.";
+}
+
+}
+
+/* OPERATING SYSTEM */
+
+else if(input.includes("operating system")){
+
+if(input.includes("what")){
+response="An operating system is system software that manages hardware resources and provides services for applications.";
+}
+
+else if(input.includes("functions")){
+response="Functions of an operating system include process management, memory management, file management and device management.";
+}
+
+else{
+response="An operating system acts as an interface between the user and computer hardware.";
+}
+
+}
+
+/* PYTHON */
+
+else if(input.includes("python")){
+
+if(input.includes("applications")){
+response="Applications of Python include web development, data science, machine learning and artificial intelligence.";
+}
+
+else{
+response="Python is a high level programming language used for AI, web development and data science.";
+}
+
+}
+
+/* DBMS */
+
+else if(input.includes("dbms")){
+
+if(input.includes("advantages")){
+response="Advantages of DBMS include reduced redundancy, improved data security and better data management.";
+}
+
+else{
+response="DBMS stands for Database Management System used to store and manage data.";
+}
+
+}
+
+/* DATA ANALYTICS */
+
+else if(input.includes("data analytics")){
+response="Data analytics is the process of examining data sets to discover useful insights and patterns.";
+}
+
+/* STATISTICS */
+
+else if(input.includes("statistics")){
+response="Statistics is the science of collecting, analyzing and interpreting numerical data.";
+}
+
+/* COMPUTER NETWORKS */
+
+else if(input.includes("network")){
+response="A computer network is a system of interconnected computers that share resources.";
+}
+
+/* CYBER SECURITY */
+
+else if(input.includes("cyber security")){
+response="Cyber security protects systems, networks and data from cyber attacks.";
+}
+
+/* DEEP LEARNING */
+
+else if(input.includes("deep learning")){
+response="Deep learning is a subset of machine learning that uses neural networks.";
+}
+
+/* DEFAULT */
+
+else{
+response="Please ask a question related to your study subjects.";
+}
+
+chatbox.innerHTML += "<p><b>You:</b> "+input+"</p>";
+chatbox.innerHTML += "<p><b>Bot:</b> "+response+"</p>";
+
+document.getElementById("userInput").value="";
+}
+</script>
+
+
+
+</body>
+</html>
+
